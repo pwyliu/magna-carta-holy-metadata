@@ -1,5 +1,6 @@
 import site_config
 import logging
+import os
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from werkzeug.contrib.fixers import ProxyFix
@@ -16,7 +17,11 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
 #File Logger Config
+if not os.path.exists(site_config.LOG_PATH):
+    open(site_config.LOG_PATH, 'w+').close()
+
 file_handler = RotatingFileHandler(site_config.LOG_PATH,
+                                   mode='a',
                                    maxBytes=site_config.LOG_SIZE,
                                    backupCount=site_config.LOG_ARCHIVES)
 file_handler.setLevel(logging.INFO)
