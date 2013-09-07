@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Stolen from http://senko.net/en/django-nginx-gunicorn/
 set -e
 
@@ -10,8 +10,10 @@ NUM_WORKERS=2
 
 USER=www-data
 GROUP=www-data
+APPPATH=/opt/magna-carta-holy-metadata
+VENV=venv/bin/activate
 
-cd /opt/magna-carta-holy-metadata
-source venv/bin/activate
+cd $APPPATH
+source $VENV
 test -d $LOGDIR || mkdir -p $LOGDIR
-exec gunicorn -b 127.0.0.1:$POST -w $NUM_WORKERS --user=$USER --group=$GROUP --log-level=debug --log-file=$LOGFILE 2>>$LOGFILE
+exec gunicorn -b 127.0.0.1:$PORT -w $NUM_WORKERS --user=$USER --group=$GROUP --log-level=debug --log-file=$LOGFILE 2>>$LOGFILE runserver:app
