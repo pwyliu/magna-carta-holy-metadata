@@ -13,7 +13,7 @@ if __name__ == '__main__':
         index = db.configdata.ensure_index(
             'ttlstart',
             pymongo.DESCENDING,
-            expireAfterSeconds=site_config.LIFETIME
+            expireAfterSeconds=site_config.DOC_LIFETIME
         )
 
         if index is not None:

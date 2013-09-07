@@ -1,7 +1,7 @@
 #################################
 #  TURN THIS OFF IN PRODUCTION  #
 #################################
-APP_DEBUG_MODE = True
+APP_DEBUG_MODE = False
 #################################
 
 #APP CONFIG
@@ -9,9 +9,8 @@ APP_NAME = 'mchm'
 PORT = 5000
 
 # Config data lifetime.
-# If you change this you have to recreate the index
-# in Mongo with the build_index script.
-LIFETIME = 3600
+# If you change this you will have to recreate the index with the build_index script.
+DOC_LIFETIME = 3600
 
 #DB CONFIG
 MONGO_DB_NAME = 'mchm'

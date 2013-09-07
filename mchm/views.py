@@ -24,7 +24,6 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    app.logger.info("test")
     return 'Hi this is mchm.'
 
 

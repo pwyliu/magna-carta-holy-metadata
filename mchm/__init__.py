@@ -2,6 +2,7 @@ import site_config
 import logging
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
+from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask
 from mongokit import MongoClient
 
@@ -11,6 +12,7 @@ db = MongoClient(site_config.MONGO_URI)
 #App Config
 app = Flask(__name__)
 app.debug = site_config.APP_DEBUG_MODE
+app.wsgi_app = ProxyFix(app.wsgi_app)
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
 #File Logger Config
