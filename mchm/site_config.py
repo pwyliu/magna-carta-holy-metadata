@@ -7,6 +7,11 @@ APP_DEBUG_MODE = False
 #APP CONFIG
 APP_NAME = 'mchm'
 PORT = 5000
+if APP_DEBUG_MODE:
+    HOSTNAME = 'localhost:'+str(PORT)
+else:
+    HOSTNAME = 'mchm.ho.kanetix.com'
+
 
 # Config data lifetime.
 # If you change this you will have to recreate the index with the build_index script.

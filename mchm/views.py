@@ -4,7 +4,7 @@ from mongokit import Document, ObjectId
 from werkzeug import exceptions as werkzeug_exceptions
 from bson import json_util
 from pymongo import errors as pymongo_exceptions
-from flask import request, jsonify, abort
+from flask import request, jsonify, abort, render_template, url_for
 from datetime import datetime
 
 
@@ -35,12 +35,13 @@ def get_data(docid=None, field=None):
         if doc is None:
             abort(404)
         elif field is None:
-            return json.dumps(doc, default=json_util.default)
+            url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=docid))
+            return render_template('base.html', url=url)
 
         if unicode(field) == 'meta-data':
-            return doc['meta-data']
+            return render_template('userdata.html', data=doc['meta-data'])
         elif unicode(field) == 'user-data':
-            return doc['user-data']
+            return render_template('userdata.html', data=doc['user-data'])
         else:
             abort(404)
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):

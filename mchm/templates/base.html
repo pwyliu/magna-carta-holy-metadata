@@ -1,0 +1,19 @@
+<html>
+<head></head>
+<body>
+<pre style="word-wrap: break-word; white-space: pre-wrap;">
+#cloud-config
+## this can be utilized by booting an image that has a kernel
+## command line like
+##    ro root=/dev/vda url={{url}}
+##
+## Then, cloud-init will read:
+##   {{url}}user-data
+##     and
+##   {{url}}meta-data
+datasource:
+    NoCloudNet:
+        seedfrom: {{url}}
+</pre>
+</body>
+</html>
