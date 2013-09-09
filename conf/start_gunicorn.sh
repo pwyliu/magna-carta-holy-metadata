@@ -2,16 +2,15 @@
 # Stolen from http://senko.net/en/django-nginx-gunicorn/
 set -e
 
+USER=www-data
+GROUP=www-data
+VENV=venv/bin/activate
 
 APPPATH=/opt/magna-carta-holy-metadata
 LOGFILE=$APPPATH/gunicorn.log
 
 PORT=8000
 NUM_WORKERS=2
-
-USER=www-data
-GROUP=www-data
-VENV=venv/bin/activate
 
 cd $APPPATH
 source $VENV
