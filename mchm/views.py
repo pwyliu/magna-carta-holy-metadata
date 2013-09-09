@@ -61,7 +61,7 @@ def post_data():
         abort(400)
 
     try:
-        ttlstart = datetime.now()
+        ttlstart = datetime.utcnow()
         doc = db.Configdata()
         doc['ttlstart'] = ttlstart
         doc['user-data'] = userdata
