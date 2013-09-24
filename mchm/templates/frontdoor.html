@@ -6,12 +6,12 @@ Hi this is mchm.
 
 POST json to http://mchm.ho.kanetix.com/api/submit/
 
-	curl http://mchm.ho.kanetix.com/api/submit -X POST -H "Content-type:application/json" -d '{"user-data":"this is userdata","meta-data":"this is metadata"}'
+  curl http://mchm.ho.kanetix.com/api/submit -X POST -H "Content-type:application/json" -d '{"user-data":"this is userdata","meta-data":"this is metadata"}'
 
 GET metadata at http://mchm.ho.kanetix.com/api/[some docid]/
 
   curl http://mchm.ho.kanetix.com/api/52420dcf73b4c203eef3db62/
-	curl http://mchm.ho.kanetix.com/api/52420dcf73b4c203eef3db62/user-data
+  curl http://mchm.ho.kanetix.com/api/52420dcf73b4c203eef3db62/user-data
   curl http://mchm.ho.kanetix.com/api/52420dcf73b4c203eef3db62/meta-data
 
 That's about it.
