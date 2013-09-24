@@ -68,10 +68,12 @@ def post_data():
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
         doc.save()
+        url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=doc['_id']))
         return jsonify(
             status='200',
             ttlstart=ttlstart.strftime('%c'),
-            id=unicode(doc['_id'])
+            id=unicode(doc['_id']),
+            url=url
         )
     except Exception as ex:
         app.logger.error(ex)
