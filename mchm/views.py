@@ -71,6 +71,7 @@ def post_data():
         url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=doc['_id']))
         return jsonify(
             status='200',
+            ttltime=site_config.DOC_LIFETIME,
             ttlstart=ttlstart.strftime('%c'),
             id=unicode(doc['_id']),
             url=url
