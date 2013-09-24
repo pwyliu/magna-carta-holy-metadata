@@ -4,7 +4,7 @@
 APP_DEBUG_MODE = False
 #################################
 
-#APP CONFIG
+#APP CONFIGssh
 APP_NAME = 'mchm'
 PORT = 5000
 if APP_DEBUG_MODE:
