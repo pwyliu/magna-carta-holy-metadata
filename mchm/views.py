@@ -24,7 +24,7 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    return 'Hi this is mchm.'
+    return render_template('frontdoor.html')
 
 
 @app.route('/api/<docid>/')
