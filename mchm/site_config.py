@@ -7,6 +7,7 @@ APP_DEBUG_MODE = False
 #APP CONFIGssh
 APP_NAME = 'mchm'
 PORT = 5000
+ZEROCONF_IP = '169.254.169.254'
 if APP_DEBUG_MODE:
     HOSTNAME = 'localhost:'+str(PORT)
 else:

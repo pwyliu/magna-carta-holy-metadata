@@ -35,7 +35,7 @@ def get_data(docid=None, field=None):
         if doc is None:
             abort(404)
         elif field is None:
-            url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=docid))
+            url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=docid))
             return render_template('base.html', url=url)
 
         if unicode(field) == 'meta-data':
@@ -68,7 +68,7 @@ def post_data():
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
         doc.save()
-        url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=doc['_id']))
+        url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id']))
         return jsonify(
             status=200,
             ttltime=site_config.DOC_LIFETIME,
