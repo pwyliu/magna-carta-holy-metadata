@@ -4,7 +4,7 @@ from mongokit import Document, ObjectId
 from werkzeug import exceptions as werkzeug_exceptions
 from bson import json_util
 from pymongo import errors as pymongo_exceptions
-from flask import request, jsonify, abort, render_template, url_for
+from flask import request, jsonify, abort, render_template, url_for, Response
 from datetime import datetime
 
 
@@ -36,18 +36,21 @@ def get_data(docid=None, field=None):
             abort(404)
         elif field is None:
             url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=docid))
-            return render_template('base',
-                                   url=url,
-                                   mimetype='text/plain')
+            return Response(
+                render_template('base', url=url),
+                mimetype='text/plain'
+            )
 
         if unicode(field) == 'meta-data':
-            return render_template('userdata',
-                                   data=doc['meta-data'],
-                                   mimetype='text/plain')
+            return Response(
+                render_template('userdata', data=doc['meta-data']),
+                mimetype='text/plain'
+            )
         elif unicode(field) == 'user-data':
-            return render_template('userdata',
-                                   data=doc['user-data'],
-                                   mimetype='text/plain')
+            return Response(
+                render_template('userdata', data=doc['user-data']),
+                mimetype='text/plain'
+            )
         else:
             abort(404)
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
