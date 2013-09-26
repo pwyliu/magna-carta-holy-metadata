@@ -35,7 +35,7 @@ def get_data(docid=None, field=None):
         if doc is None:
             abort(404)
         elif field is None:
-            url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=docid))
+            url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=docid))
             return Response(
                 render_template('base', url=url),
                 mimetype='text/plain'
