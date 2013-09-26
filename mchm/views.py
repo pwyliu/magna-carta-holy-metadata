@@ -24,7 +24,7 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    return render_template('frontdoor.html')
+    return render_template('frontdoor', mimetype='text/plain')
 
 
 @app.route('/api/<docid>/')
@@ -36,12 +36,18 @@ def get_data(docid=None, field=None):
             abort(404)
         elif field is None:
             url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=docid))
-            return render_template('base.html', url=url)
+            return render_template('base',
+                                   url=url,
+                                   mimetype='text/plain')
 
         if unicode(field) == 'meta-data':
-            return render_template('userdata.html', data=doc['meta-data'])
+            return render_template('userdata',
+                                   data=doc['meta-data'],
+                                   mimetype='text/plain')
         elif unicode(field) == 'user-data':
-            return render_template('userdata.html', data=doc['user-data'])
+            return render_template('userdata',
+                                   data=doc['user-data'],
+                                   mimetype='text/plain')
         else:
             abort(404)
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
@@ -69,12 +75,14 @@ def post_data():
         doc['meta-data'] = metadata
         doc.save()
         url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id']))
+        outside_url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=doc['_id']))
         return jsonify(
             status=200,
             ttltime=site_config.DOC_LIFETIME,
             ttlstart=ttlstart.strftime('%c'),
             id=unicode(doc['_id']),
-            url=url
+            inside_url=url,
+            outside_url=outside_url,
         )
     except Exception as ex:
         app.logger.error(ex)

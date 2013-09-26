@@ -1,7 +1,3 @@
-<html>
-<head><title>Magna Carta Holy Metadata</title></head>
-<body>
-<pre style="word-wrap: break-word; white-space: pre-wrap;">
 Hi this is mchm.
 
 POST json to http://mchm.ho.kanetix.com/api/submit/
@@ -15,6 +11,3 @@ GET metadata at http://mchm.ho.kanetix.com/api/[some docid]/
   curl http://mchm.ho.kanetix.com/api/52420dcf73b4c203eef3db62/meta-data
 
 That's about it.
-</pre>
-</body>
-</html>
