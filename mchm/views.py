@@ -75,7 +75,7 @@ def post_data():
 
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
-    nwinterfaces = request.get_json().get('network-interfaces', None)
+    nwinterfaces = request.get_json().get('network-interfaces', '')
 
     if userdata is None or metadata is None:
         abort(400)
@@ -86,8 +86,7 @@ def post_data():
         doc['ttlstart'] = ttlstart
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
-        if nwinterfaces is not None:
-            doc['network-interfaces'] = nwinterfaces
+        doc['network-interfaces'] = nwinterfaces
         doc.save()
         url = "http://{0}{1}".format(
             site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
