@@ -16,6 +16,7 @@ class Configdata(Document):
         'ttlstart': datetime,
         'meta-data': unicode,
         'user-data': unicode,
+        'network-interfaces': unicode,
     }
     required_fields = {}
     default_values = {}
@@ -35,20 +36,24 @@ def get_data(docid=None, field=None):
         if doc is None:
             abort(404)
         elif field is None:
-            url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=docid))
+            url = "http://{0}{1}".format(
+                site_config.HOSTNAME, url_for('get_data', docid=docid)
+            )
             return Response(
-                render_template('base', url=url),
+                render_template(
+                    'base.jinja2', url=url, nw=doc['network-interfaces']
+                ),
                 mimetype='text/plain'
             )
 
         if unicode(field) == 'meta-data':
             return Response(
-                render_template('userdata', data=doc['meta-data']),
+                render_template('data.jinja2', data=doc['meta-data']),
                 mimetype='text/plain'
             )
-        elif unicode(field) == 'user-data':
+        elif unicode(field) == 'user-data.jinja2':
             return Response(
-                render_template('userdata', data=doc['user-data']),
+                render_template('data.jinja2', data=doc['user-data']),
                 mimetype='text/plain'
             )
         else:
@@ -67,6 +72,8 @@ def post_data():
 
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
+    nwinterfaces = request.get_json().get('network-interfaces', None)
+
     if userdata is None or metadata is None:
         abort(400)
 
@@ -76,9 +83,15 @@ def post_data():
         doc['ttlstart'] = ttlstart
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
+        if nwinterfaces is not None:
+            doc['network-interfaces'] = nwinterfaces
         doc.save()
-        url = "http://{0}{1}".format(site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id']))
-        outside_url = "http://{0}{1}".format(site_config.HOSTNAME, url_for('get_data', docid=doc['_id']))
+        url = "http://{0}{1}".format(
+            site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
+        )
+        outside_url = "http://{0}{1}".format(
+            site_config.HOSTNAME, url_for('get_data', docid=doc['_id'])
+        )
         return jsonify(
             status=200,
             ttltime=site_config.DOC_LIFETIME,
