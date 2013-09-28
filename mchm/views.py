@@ -1,8 +1,6 @@
 from mchm import app, db, site_config
-import json
 from mongokit import Document, ObjectId
 from werkzeug import exceptions as werkzeug_exceptions
-from bson import json_util
 from pymongo import errors as pymongo_exceptions
 from flask import request, jsonify, abort, render_template, url_for, Response
 from datetime import datetime
@@ -16,7 +14,6 @@ class Configdata(Document):
         'ttlstart': datetime,
         'meta-data': unicode,
         'user-data': unicode,
-        'network-interfaces': unicode,
     }
     required_fields = {}
     default_values = {}
@@ -43,9 +40,7 @@ def get_data(docid=None, field=None):
                 site_config.HOSTNAME, url_for('get_data', docid=docid)
             )
             return Response(
-                render_template(
-                    'base.jinja2', url=url, nw=doc['network-interfaces']
-                ),
+                render_template('base.jinja2', url=url),
                 mimetype='text/plain'
             )
 
@@ -75,7 +70,6 @@ def post_data():
 
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
-    nwinterfaces = request.get_json().get('network-interfaces', '')
 
     if userdata is None or metadata is None:
         abort(400)
@@ -86,7 +80,6 @@ def post_data():
         doc['ttlstart'] = ttlstart
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
-        doc['network-interfaces'] = nwinterfaces
         doc.save()
         url = "http://{0}{1}".format(
             site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
