@@ -25,7 +25,10 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    return render_template('frontdoor.jinja2', mimetype='text/plain')
+    return Response(
+        render_template('frontdoor.jinja2'),
+        mimetype='text/plain'
+    )
 
 
 @app.route('/api/<docid>/')
