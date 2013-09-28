@@ -54,7 +54,7 @@ def get_data(docid=None, field=None):
                 render_template('data.jinja2', data=doc['meta-data']),
                 mimetype='text/plain'
             )
-        elif unicode(field) == 'user-data.jinja2':
+        elif unicode(field) == 'user-data':
             return Response(
                 render_template('data.jinja2', data=doc['user-data']),
                 mimetype='text/plain'
