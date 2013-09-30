@@ -81,10 +81,10 @@ def post_data():
         doc['user-data'] = userdata
         doc['meta-data'] = metadata
         doc.save()
-        url = "http://{0}{1}".format(
+        zeroconf_url = "http://{0}{1}".format(
             site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
         )
-        outside_url = "http://{0}{1}".format(
+        ipv4_url = "http://{0}{1}".format(
             site_config.HOSTNAME, url_for('get_data', docid=doc['_id'])
         )
         return jsonify(
@@ -92,8 +92,8 @@ def post_data():
             ttltime=site_config.DOC_LIFETIME,
             ttlstart=ttlstart.strftime('%c'),
             id=unicode(doc['_id']),
-            inside_url=url,
-            outside_url=outside_url,
+            zeroconf_url=zeroconf_url,
+            ipv4_url=ipv4_url,
         )
     except Exception as ex:
         app.logger.error(ex)
