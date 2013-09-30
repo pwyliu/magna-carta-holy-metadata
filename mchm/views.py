@@ -22,8 +22,9 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
+    url = "http://{0}".format(request.headers['host'])
     return Response(
-        render_template('frontdoor.jinja2'),
+        render_template('frontdoor.jinja2', url=url),
         mimetype='text/plain'
     )
 
