@@ -37,7 +37,7 @@ def get_data(docid=None, field=None):
             abort(404)
         elif field is None:
             url = "http://{0}{1}".format(
-                site_config.HOSTNAME, url_for('get_data', docid=docid)
+                request.headers['host'], url_for('get_data', docid=docid)
             )
             return Response(
                 render_template('base.jinja2', url=url),
