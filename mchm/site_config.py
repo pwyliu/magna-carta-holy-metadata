@@ -4,18 +4,19 @@
 APP_DEBUG_MODE = False
 #################################
 
-#APP CONFIGssh
+#APP CONFIG
 APP_NAME = 'mchm'
-PORT = 5000
 ZEROCONF_IP = '169.254.169.254'
 if APP_DEBUG_MODE:
-    HOSTNAME = 'localhost:'+str(PORT)
+    HOSTNAME = 'localhost'
+    PORT = 5000
 else:
     HOSTNAME = 'mchm.ho.kanetix.com'
-
+    PORT = 5000
 
 # Config data lifetime.
-# If you change this you will have to recreate the index with the build_index script.
+# If you change this you will have to recreate the index with
+# the build_index script.
 DOC_LIFETIME = 3600
 
 #DB CONFIG
