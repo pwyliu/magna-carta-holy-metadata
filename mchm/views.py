@@ -12,14 +12,14 @@ class Configdata(Document):
     __database__ = site_config.MONGO_DB_NAME
     structure = {
         'created_at': datetime,
-        'ci_complete': (datetime, bool),
+        'ci_complete': (datetime, bool, dict),
         'metadata': unicode,
         'userdata': unicode,
     }
     required_fields = ['created_at', 'meta-data', 'user-data']
     default_values = {
         'created_at': None,
-        'ci_complete': (None, False),
+        'ci_complete': (None, False, None),
         'metadata': None,
         'userdata': None,
     }
@@ -45,10 +45,11 @@ def get_data(docid=None, field=None):
             request.headers['host'],
             url_for('get_data', docid=docid)
         )
-        # base
         if doc is None:
             abort(404)
-        elif field is None:
+
+        # base
+        if field is None:
             return Response(
                 render_template('base.jinja2', url=url),
                 mimetype='text/plain'
@@ -64,6 +65,20 @@ def get_data(docid=None, field=None):
             return Response(
                 render_template('data.jinja2', data=doc['userdata']),
                 mimetype='text/plain'
+            )
+
+        # cloud-init phonehome module
+        elif unicode(field) == 'phonehome':
+            if request.args is not None:
+                doc['ci_complete'] = (
+                    datetime.utcnow(), True, request.args.to_dict()
+                )
+                doc.save()
+            return jsonify(
+                status=200,
+                phonehome_timestamp=doc['ci_complete'][0],
+                phonehome_status=doc['ci_complete'][1],
+                phonehome_data=doc['ci_complete'][2]
             )
         else:
             abort(404)
@@ -104,8 +119,8 @@ def post_data():
         )
         return jsonify(
             status=200,
-            ttltime=site_config.DOC_LIFETIME,
-            ttlstart=created_at.strftime('%c'),
+            ttl=site_config.DOC_LIFETIME,
+            created_at=created_at.strftime('%c'),
             id=unicode(doc['_id']),
             zeroconf_url=zeroconf_url,
             ipv4_url=ipv4_url,
