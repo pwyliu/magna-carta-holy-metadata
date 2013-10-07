@@ -7,6 +7,9 @@ APP_DEBUG_MODE = False
 #APP CONFIG
 APP_NAME = 'mchm'
 ZEROCONF_IP = '169.254.169.254'
+
+# change to 'https' if you are using SSL on upstream server
+URL_SCHEME = 'http'
 if APP_DEBUG_MODE:
     HOSTNAME = 'localhost'
     PORT = 5000

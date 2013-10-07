@@ -28,7 +28,7 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    url = "http://{0}".format(request.headers['host'])
+    url = "{0}://{1}".format(site_config.URL_SCHEME, request.headers['host'])
     return Response(
         render_template('frontdoor.jinja2', url=url),
         mimetype='text/plain'
@@ -40,17 +40,21 @@ def frontdoor():
 def get_data(docid=None, field=None):
     try:
         doc = db.Configdata.fetch_one({'_id': ObjectId(docid)})
+        url = "{0}://{1}{2}".format(
+            site_config.URL_SCHEME,
+            request.headers['host'],
+            url_for('get_data', docid=docid)
+        )
+        # base
         if doc is None:
             abort(404)
         elif field is None:
-            url = "http://{0}{1}".format(
-                request.headers['host'], url_for('get_data', docid=docid)
-            )
             return Response(
                 render_template('base.jinja2', url=url),
                 mimetype='text/plain'
             )
 
+        # userdata or metadata
         if unicode(field) == 'meta-data':
             return Response(
                 render_template('data.jinja2', data=doc['metadata']),
@@ -88,11 +92,15 @@ def post_data():
         doc['userdata'] = userdata
         doc['metadata'] = metadata
         doc.save()
-        zeroconf_url = "http://{0}{1}".format(
-            site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
+        zeroconf_url = "{0}://{1}{2}".format(
+            site_config.URL_SCHEME,
+            site_config.ZEROCONF_IP,
+            url_for('get_data', docid=doc['_id'])
         )
-        ipv4_url = "http://{0}{1}".format(
-            site_config.HOSTNAME, url_for('get_data', docid=doc['_id'])
+        ipv4_url = "{0}://{1}{2}".format(
+            site_config.URL_SCHEME,
+            site_config.HOSTNAME,
+            url_for('get_data', docid=doc['_id'])
         )
         return jsonify(
             status=200,
