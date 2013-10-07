@@ -34,7 +34,7 @@ def frontdoor():
 
 
 @app.route('/api/<iid>/')
-@app.route('/api/<iid>/<field>')
+@app.route('/api/<iid>/<field>', methods=['GET', 'POST'])
 def get_data(iid=None, field=None):
     try:
         doc = db.Configdata.fetch_one({'iid': iid})
@@ -65,7 +65,7 @@ def get_data(iid=None, field=None):
             )
         # cloud-init phonehome module
         elif unicode(field) == 'phonehome':
-            if request.args is not None:
+            if request.method == 'POST':
                 doc['ci_phonehome'] = (
                     datetime.utcnow(), True, request.args.to_dict()
                 )
