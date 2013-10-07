@@ -11,7 +11,7 @@ class Configdata(Document):
     __collection__ = 'configdata'
     __database__ = site_config.MONGO_DB_NAME
     structure = {
-        'iid': str,
+        'iid': unicode,
         'created_at': datetime,
         'ci_phonehome': (datetime, bool, dict),
         'metadata': unicode,
@@ -90,9 +90,9 @@ def post_data():
     if request.headers['Content-Type'] != 'application/json':
         abort(415)
 
-    iid = request.get_json().get('iid', None)
-    userdata = request.get_json().get('user-data', None)
-    metadata = request.get_json().get('meta-data', None)
+    iid = unicode(request.get_json().get('iid', None))
+    userdata = unicode(request.get_json().get('user-data', None))
+    metadata = unicode(request.get_json().get('meta-data', None))
 
     if userdata is None or metadata is None or iid is None:
         abort(400)
@@ -118,7 +118,7 @@ def post_data():
             status=200,
             ttl=site_config.DOC_LIFETIME,
             created_at=created_at.strftime('%c'),
-            iid=str(iid),
+            iid=iid,
             zeroconf_url=zeroconf_url,
             ipv4_url=ipv4_url,
         )
