@@ -1,5 +1,5 @@
 from mchm import app, db, site_config
-from mongokit import Document, ObjectId
+from mongokit import Document, ObjectId, MultipleResultsFound
 from werkzeug import exceptions as werkzeug_exceptions
 from pymongo import errors as pymongo_exceptions
 from flask import request, jsonify, abort, render_template, url_for, Response
@@ -12,14 +12,14 @@ class Configdata(Document):
     __database__ = site_config.MONGO_DB_NAME
     structure = {
         'created_at': datetime,
-        'ci_complete': (datetime, bool, dict),
+        'ci_phonehome': (datetime, bool, dict),
         'metadata': unicode,
         'userdata': unicode,
     }
     required_fields = ['created_at', 'metadata', 'userdata']
     default_values = {
         'created_at': None,
-        'ci_complete': (None, False, None),
+        'ci_phonehome': (None, False, None),
         'metadata': None,
         'userdata': None,
     }
@@ -35,15 +35,15 @@ def frontdoor():
     )
 
 
-@app.route('/api/<docid>/')
-@app.route('/api/<docid>/<field>')
-def get_data(docid=None, field=None):
+@app.route('/api/<iid>/')
+@app.route('/api/<iid>/<field>')
+def get_data(iid=None, field=None):
     try:
-        doc = db.Configdata.fetch_one({'_id': ObjectId(docid)})
+        doc = db.Configdata.fetch_one({'iid': iid})
         url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             request.headers['host'],
-            url_for('get_data', docid=docid)
+            url_for('get_data', iid=iid)
         )
         if doc is None:
             abort(404)
@@ -54,7 +54,6 @@ def get_data(docid=None, field=None):
                 render_template('base.jinja2', url=url),
                 mimetype='text/plain'
             )
-
         # userdata or metadata
         if unicode(field) == 'meta-data':
             return Response(
@@ -66,19 +65,18 @@ def get_data(docid=None, field=None):
                 render_template('data.jinja2', data=doc['userdata']),
                 mimetype='text/plain'
             )
-
         # cloud-init phonehome module
         elif unicode(field) == 'phonehome':
             if request.args is not None:
-                doc['ci_complete'] = (
+                doc['ci_phonehome'] = (
                     datetime.utcnow(), True, request.args.to_dict()
                 )
                 doc.save()
             return jsonify(
                 status=200,
-                phonehome_timestamp=doc['ci_complete'][0],
-                phonehome_status=doc['ci_complete'][1],
-                phonehome_data=doc['ci_complete'][2]
+                phonehome_timestamp=doc['ci_phonehome'][0],
+                phonehome_status=doc['ci_phonehome'][1],
+                phonehome_data=doc['ci_phonehome'][2]
             )
         else:
             abort(404)
@@ -94,34 +92,41 @@ def post_data():
     if request.headers['Content-Type'] != 'application/json':
         abort(415)
 
+    iid = request.get_json().get('iid', None)
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
 
-    if userdata is None or metadata is None:
+    if userdata is None or metadata is None or iid is None:
+        abort(400)
+
+    # check if there is an existing doc with this iid
+    check = db.Configdata.fetch_one({'iid': iid})
+    if check is not None:
         abort(400)
 
     try:
         created_at = datetime.utcnow()
         doc = db.Configdata()
         doc['created_at'] = created_at
+        doc['iid'] = iid
         doc['userdata'] = userdata
         doc['metadata'] = metadata
         doc.save()
         zeroconf_url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             site_config.ZEROCONF_IP,
-            url_for('get_data', docid=doc['_id'])
+            url_for('get_data', iid=doc['iid'])
         )
         ipv4_url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             site_config.HOSTNAME,
-            url_for('get_data', docid=doc['_id'])
+            url_for('get_data', iid=doc['iid'])
         )
         return jsonify(
             status=200,
             ttl=site_config.DOC_LIFETIME,
             created_at=created_at.strftime('%c'),
-            id=unicode(doc['_id']),
+            iid=str(iid),
             zeroconf_url=zeroconf_url,
             ipv4_url=ipv4_url,
         )
