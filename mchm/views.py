@@ -16,7 +16,7 @@ class Configdata(Document):
         'metadata': unicode,
         'userdata': unicode,
     }
-    required_fields = ['created_at', 'meta-data', 'user-data']
+    required_fields = ['created_at', 'metadata', 'userdata']
     default_values = {
         'created_at': None,
         'ci_complete': (None, False, None),
