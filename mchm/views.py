@@ -11,12 +11,18 @@ class Configdata(Document):
     __collection__ = 'configdata'
     __database__ = site_config.MONGO_DB_NAME
     structure = {
-        'ttlstart': datetime,
-        'meta-data': unicode,
-        'user-data': unicode,
+        'created_at': datetime,
+        'ci_complete': (datetime, bool),
+        'metadata': unicode,
+        'userdata': unicode,
     }
-    required_fields = {}
-    default_values = {}
+    required_fields = ['created_at', 'meta-data', 'user-data']
+    default_values = {
+        'created_at': None,
+        'ci_complete': (None, False),
+        'metadata': None,
+        'userdata': None,
+    }
 
 
 #Routes
@@ -47,12 +53,12 @@ def get_data(docid=None, field=None):
 
         if unicode(field) == 'meta-data':
             return Response(
-                render_template('data.jinja2', data=doc['meta-data']),
+                render_template('data.jinja2', data=doc['metadata']),
                 mimetype='text/plain'
             )
         elif unicode(field) == 'user-data':
             return Response(
-                render_template('data.jinja2', data=doc['user-data']),
+                render_template('data.jinja2', data=doc['userdata']),
                 mimetype='text/plain'
             )
         else:
@@ -76,11 +82,11 @@ def post_data():
         abort(400)
 
     try:
-        ttlstart = datetime.utcnow()
+        created_at = datetime.utcnow()
         doc = db.Configdata()
-        doc['ttlstart'] = ttlstart
-        doc['user-data'] = userdata
-        doc['meta-data'] = metadata
+        doc['created_at'] = created_at
+        doc['userdata'] = userdata
+        doc['metadata'] = metadata
         doc.save()
         zeroconf_url = "http://{0}{1}".format(
             site_config.ZEROCONF_IP, url_for('get_data', docid=doc['_id'])
@@ -91,7 +97,7 @@ def post_data():
         return jsonify(
             status=200,
             ttltime=site_config.DOC_LIFETIME,
-            ttlstart=ttlstart.strftime('%c'),
+            ttlstart=created_at.strftime('%c'),
             id=unicode(doc['_id']),
             zeroconf_url=zeroconf_url,
             ipv4_url=ipv4_url,
