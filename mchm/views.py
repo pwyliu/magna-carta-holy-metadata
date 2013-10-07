@@ -67,7 +67,7 @@ def get_data(iid=None, field=None):
         elif unicode(field) == 'phonehome':
             if request.method == 'POST':
                 doc['ci_phonehome'] = (
-                    datetime.utcnow(), True, request.args.to_dict()
+                    datetime.utcnow(), True, request.form.to_dict()
                 )
                 doc.save()
             return jsonify(
