@@ -98,12 +98,6 @@ def post_data():
 
     if userdata is None or metadata is None or iid is None:
         abort(400)
-
-    # check if there is an existing doc with this iid
-    check = db.Configdata.fetch_one({'iid': iid})
-    if check is not None:
-        abort(400)
-
     try:
         created_at = datetime.utcnow()
         doc = db.Configdata()
