@@ -11,17 +11,15 @@ class Configdata(Document):
     __collection__ = 'configdata'
     __database__ = site_config.MONGO_DB_NAME
     structure = {
+        'iid': str,
         'created_at': datetime,
         'ci_phonehome': (datetime, bool, dict),
         'metadata': unicode,
         'userdata': unicode,
     }
-    required_fields = ['created_at', 'metadata', 'userdata']
+    required_fields = ['iid', 'created_at', 'metadata', 'userdata']
     default_values = {
-        'created_at': None,
         'ci_phonehome': (None, False, None),
-        'metadata': None,
-        'userdata': None,
     }
 
 
