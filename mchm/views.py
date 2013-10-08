@@ -38,7 +38,7 @@ def frontdoor():
 
 
 @app.route('/api/<iid>/')
-@app.route('/api/<iid>/<field>', methods=['GET', 'POST'])
+@app.route('/api/<iid>/<field>/', methods=['GET', 'POST'])
 def get_data(iid=None, field=None):
     try:
         doc = db.Configdata.fetch_one({'iid': iid})
