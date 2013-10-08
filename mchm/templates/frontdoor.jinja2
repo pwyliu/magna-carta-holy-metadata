@@ -2,7 +2,7 @@ Hi this is mchm.
 
 POST json to {{url}}/api/submit/
 
-  curl {{url}}/api/submit -X POST -H "Content-type:application/json" -d '{"user-data":"this is userdata","meta-data":"this is metadata"}'
+  curl {{url}}/api/submit -X POST -H "Content-type:application/json" -d '{"iid":"$instance_id","user-data":"$userdata","meta-data":"$metadata"}'
 
 GET metadata at {{url}}/api/[instance_id]/
 
