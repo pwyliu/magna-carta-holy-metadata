@@ -1,5 +1,5 @@
 from mchm import app, db, site_config
-from mongokit import Document, ObjectId, MultipleResultsFound
+from mongokit import Document
 from werkzeug import exceptions as werkzeug_exceptions
 from pymongo import errors as pymongo_exceptions
 from flask import request, jsonify, abort, render_template, url_for, Response
@@ -13,13 +13,17 @@ class Configdata(Document):
     structure = {
         'iid': unicode,
         'created_at': datetime,
-        'ci_phonehome': (datetime, bool, dict),
+        'phonehome_status': bool,
+        'phonehome_time': datetime,
+        'phonehome_data': dict,
         'metadata': unicode,
         'userdata': unicode,
     }
     required_fields = ['iid', 'created_at', 'metadata', 'userdata']
     default_values = {
-        'ci_phonehome': (None, False, None),
+        'phonehome_status': False,
+        'phonehome_time': None,
+        'phonehome_data': None,
     }
 
 
@@ -66,15 +70,15 @@ def get_data(iid=None, field=None):
         # cloud-init phonehome module
         elif unicode(field) == 'phonehome':
             if request.method == 'POST':
-                doc['ci_phonehome'] = (
-                    datetime.utcnow(), True, request.form.to_dict()
-                )
+                doc['phonehome_time'] = datetime.utcnow()
+                doc['phonehome_status'] = True
+                doc['phonehome_data'] = request.form.to_dict()
                 doc.save()
             return jsonify(
                 status=200,
-                phonehome_timestamp=doc['ci_phonehome'][0],
-                phonehome_status=doc['ci_phonehome'][1],
-                phonehome_data=doc['ci_phonehome'][2]
+                phonehome_time=doc['phonehome_time'],
+                phonehome_status=doc['phonehome_status'],
+                phonehome_data=doc['phonehome_data'],
             )
         else:
             abort(404)
