@@ -84,12 +84,14 @@ def get_data(iid=None, field=None):
             abort(404)
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
         abort(404)
+    except pymongo_exceptions.DuplicateKeyError:
+        abort(400)
     except Exception as ex:
         app.logger.error(ex)
         abort(500)
 
 
-@app.route('/api/submit', methods=['POST'])
+@app.route('/api/submit/', methods=['POST'])
 def post_data():
     if request.headers['Content-Type'] != 'application/json':
         abort(415)
