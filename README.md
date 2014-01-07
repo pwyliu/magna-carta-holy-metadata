@@ -40,7 +40,7 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
 There are just a couple endpoints available. Everything is in views.py.
 
 ####/api/submit/
-POST json formatted data to this endpoint. The three required fields are iid, userdata and metadata. iid should be unique, I used the Python UUID module to generate these.
+POST json formatted data to this endpoint. The three required fields are iid, userdata and metadata. iid should be unique, I use the Python UUID module to generate these.
 
 ```bash
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"iid":"some_unique_uuid","user-data":"this is some cloud-init userdata","meta-data":"this is some cloud-init metadata"}'
