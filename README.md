@@ -64,7 +64,7 @@ GET posted data. Supported fields:
 * `phonehome`: for use with cloud-init's phonehome module. When cloud-init posts here phonehome_status is set to true and phonehome_data contains the post data. See views.py for more details.
 
 ## Contributors
-Hey man, I'm easy, just submit a pull request. If you see something which sucks please fix it.
+Hey man, I'm easy. Just submit a pull request. If you see something which sucks please fix it.
 
 ## License
 The MIT License (MIT)
