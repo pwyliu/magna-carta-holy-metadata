@@ -38,7 +38,7 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
 5. There are sample Upstart and Nginx confs in the support folder.
 
 ## API Endpoints
-There are just a couple endpoints available. Everything is in views.py.
+There are just a couple endpoints available. Everything is in [views.py](https://github.com/pwyliu/magna-carta-holy-metadata/blob/master/mchm/views.py).
 
 ####/api/submit/
 POST json formatted data to this endpoint. The three required fields are iid, userdata and metadata. iid should be unique, I use the Python UUID module to generate these.
