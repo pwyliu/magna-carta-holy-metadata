@@ -69,7 +69,7 @@ Hey man, I'm easy. Just submit a pull request. If you see something which sucks 
 ## License
 The MIT License (MIT)
 
-Copyright (c) [2014] [Paul Liu]
+Copyright (c) 2014 Paul Liu
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
