@@ -1,5 +1,5 @@
 # Magna Carta Holy Metadata (MCHM)
-Magna Carta Holy Metadata ([MCHM](http://s.mlkshk.com/r/WBQ9)) is a simple Flask application that provides an http metadata service for virtual machines using cloud-init and the nocloudnet data source.
+Magna Carta Holy Metadata (MCHM) is a simple Flask application that provides an http metadata service for virtual machines using cloud-init and the nocloudnet data source.
 
 HTTP POST json formatted data, it hangs out for an hour on a URL you can give to cloud-init, then it's deleted automatically. Easy. 
 
@@ -35,6 +35,7 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
     ```bash
     ./runserver.py
     ```
+5. There are sample Upstart and Nginx confs in the support folder.
 
 ## API Endpoints
 There are just a couple endpoints available. Everything is in views.py.
