@@ -1,9 +1,7 @@
 venv
-XenServer-SDK
 .env
 *.swp
 *.idea
-*.pyc
 .meteor
 .*~
 
@@ -43,4 +41,4 @@ nosetests.xml
 .project
 .pydevproject
 mchm.log
-
+site_config.py
