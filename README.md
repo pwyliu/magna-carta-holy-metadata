@@ -37,7 +37,7 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
     ```
 
 ## API Endpoints
-There are just a couple endpoints available. Everything is clearly laid out in views.py.
+There are just a couple endpoints available. Everything is in views.py.
 
 ####/api/submit/
 POST json formatted data to this endpoint. The three required fields are iid, userdata and metadata. iid should be unique, I used the Python UUID module to generate these.
