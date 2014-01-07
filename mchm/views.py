@@ -75,7 +75,7 @@ def get_data(iid=None, field=None):
                 doc['phonehome_data'] = request.form.to_dict()
                 doc.save()
             return jsonify(
-                status=200,
+                status='ok',
                 phonehome_time=doc['phonehome_time'],
                 phonehome_status=doc['phonehome_status'],
                 phonehome_data=doc['phonehome_data'],
@@ -93,24 +93,29 @@ def get_data(iid=None, field=None):
 
 @app.route('/api/submit/', methods=['POST'])
 def post_data():
-    if request.headers['Content-Type'] != 'application/json':
-        abort(415)
-
+    # basic sanity checks
     iid = request.get_json().get('iid', None)
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
-
+    if request.headers['Content-Type'] != 'application/json':
+        abort(415)
     if userdata is None or metadata is None or iid is None:
         abort(400)
 
     try:
         created_at = datetime.utcnow()
-        doc = db.Configdata()
+
+        # if the iid already exists then overwrite it
+        doc = db.Configdata.fetch_one({'iid': iid})
+        if doc is None:
+            doc = db.Configdata()
         doc['created_at'] = created_at
         doc['iid'] = unicode(iid)
         doc['userdata'] = unicode(userdata)
         doc['metadata'] = unicode(metadata)
         doc.save()
+
+        # generate urls
         zeroconf_url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             site_config.ZEROCONF_IP,
@@ -122,7 +127,7 @@ def post_data():
             url_for('get_data', iid=doc['iid'])
         )
         return jsonify(
-            status=200,
+            status='ok',
             ttl=site_config.DOC_LIFETIME,
             created_at=created_at.strftime('%c'),
             iid=iid,
