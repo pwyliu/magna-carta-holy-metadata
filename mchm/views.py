@@ -96,19 +96,20 @@ def post_data():
     if request.headers['Content-Type'] != 'application/json':
         abort(415)
 
-    iid = unicode(request.get_json().get('iid', None))
-    userdata = unicode(request.get_json().get('user-data', None))
-    metadata = unicode(request.get_json().get('meta-data', None))
+    iid = request.get_json().get('iid', None)
+    userdata = request.get_json().get('user-data', None)
+    metadata = request.get_json().get('meta-data', None)
 
     if userdata is None or metadata is None or iid is None:
         abort(400)
+
     try:
         created_at = datetime.utcnow()
         doc = db.Configdata()
         doc['created_at'] = created_at
-        doc['iid'] = iid
-        doc['userdata'] = userdata
-        doc['metadata'] = metadata
+        doc['iid'] = unicode(iid)
+        doc['userdata'] = unicode(userdata)
+        doc['metadata'] = unicode(metadata)
         doc.save()
         zeroconf_url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
