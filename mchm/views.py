@@ -48,17 +48,16 @@ def frontdoor():
 def get_data(iid=None, field=None):
     try:
         doc = db.Configdata.fetch_one({'iid': iid})
-        if doc is None:
-            abort(404)
-
-        if field is not None:
-            field = unicode(field)
-
         url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             request.headers['host'],
             url_for('get_data', iid=iid)
         )
+
+        if doc is None:
+            raise werkzeug_exceptions.NotFound
+        if field is not None:
+            field = unicode(field)
 
         # cloud-init install type
         if doc['installtype'] == 'cloud-init':
@@ -67,8 +66,11 @@ def get_data(iid=None, field=None):
                     render_template('base.jinja2', url=url),
                     mimetype='text/plain'
                 )
-            if field == 'meta-data' or field == 'user-data':
-                resp = render_template('data.jinja2', data=doc[field])
+            elif field == 'meta-data':
+                resp = render_template('data.jinja2', data=doc['metadata'])
+                return Response(resp, mimetype='text/plain')
+            elif field == 'user-data':
+                resp = render_template('data.jinja2', data=doc['userdata'])
                 return Response(resp, mimetype='text/plain')
             elif field == 'phonehome':
                 if request.method == 'POST':
@@ -81,18 +83,23 @@ def get_data(iid=None, field=None):
                     phonehome_status=doc['phonehome_status'],
                     phonehome_data=doc['phonehome_data'],
                 )
+            else:
+                raise werkzeug_exceptions.BadRequest
 
         # kickstart install type
         elif doc['installtype'] == 'kickstart':
+            if field is not None:
+                raise werkzeug_exceptions.NotFound
             resp = render_template('data.jinja2', data=doc['ksdata'])
             return Response(resp, mimetype='text/plain')
 
         # unknown install type
         else:
-            abort(500)
+            raise
+
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
         abort(404)
-    except pymongo_exceptions.DuplicateKeyError:
+    except (werkzeug_exceptions.BadRequest, pymongo_exceptions.DuplicateKeyError):
         abort(400)
     except Exception as ex:
         app.logger.error(ex)
@@ -105,16 +112,15 @@ def post_data():
     if request.headers['Content-Type'] != 'application/json':
         abort(400)
 
-    # get vars and sanity check request
+    # get vars
     hostname = request.get_json().get('hostname', None)
     installtype = request.get_json().get('install-type', None)
     ksdata = request.get_json().get('ks-data', None)
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
 
-    if (installtype != 'kickstart'
-            or installtype != 'cloud-init'
-            or hostname is None):
+    # sanity check request
+    if hostname is None or installtype not in ['cloud-init', 'kickstart']:
         abort(400)
     if installtype == 'kickstart' and ksdata is None:
         abort(400)
@@ -125,27 +131,16 @@ def post_data():
     # before upload. This is a security risk sort of, but it's necessary so
     # that the uploaded data can contain the retrieval url and so we can do
     # this all in one req->resp.
-    iid = unicode(uuid.uuid5(uuid.NAMESPACE_DNS, hostname))
-
-    # generate urls and timestamp
-    created_at = datetime.utcnow()
-    zeroconf_url = "{0}://{1}{2}".format(
-        site_config.URL_SCHEME,
-        site_config.ZEROCONF_IP,
-        url_for('get_data', iid=doc['iid'])
-    )
-    ipv4_url = "{0}://{1}{2}".format(
-        site_config.URL_SCHEME,
-        site_config.HOSTNAME,
-        url_for('get_data', iid=doc['iid'])
-    )
+    iid = uuid.uuid5(uuid.NAMESPACE_DNS, str(hostname))
+    iid = unicode(iid.hex)
 
     # Save data. If the entry already exists then overwrite it
     try:
         doc = db.Configdata.fetch_one({'iid': iid})
         if doc is None:
             doc = db.Configdata()
-        doc['created_at'] = created_at
+
+        doc['created_at'] = datetime.utcnow()
         doc['iid'] = iid
         doc['installtype'] = unicode(installtype)
         if installtype == 'kickstart':
@@ -154,10 +149,23 @@ def post_data():
             doc['userdata'] = unicode(userdata)
             doc['metadata'] = unicode(metadata)
         doc.save()
+
+        # generate urls and timestamp
+        created_at = datetime.utcnow()
+        zeroconf_url = "{0}://{1}{2}".format(
+            site_config.URL_SCHEME,
+            site_config.ZEROCONF_IP,
+            url_for('get_data', iid=doc['iid'])
+        )
+        ipv4_url = "{0}://{1}{2}".format(
+            site_config.URL_SCHEME,
+            site_config.HOSTNAME,
+            url_for('get_data', iid=doc['iid'])
+        )
         return jsonify(
             status='ok',
             ttl=site_config.DOC_LIFETIME,
-            created_at=created_at.strftime('%c'),
+            created_at=doc['created_at'].strftime('%c'),
             iid=iid,
             zeroconf_url=zeroconf_url,
             ipv4_url=ipv4_url,
