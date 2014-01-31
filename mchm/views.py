@@ -127,10 +127,10 @@ def post_data():
     if installtype == 'cloud-init' and (userdata is None or metadata is None):
         abort(400)
 
-    # iid is being used as a slug that can be predetermined by the client
+    # iid.hex is being used as a slug that can be predetermined by the client
     # before upload. This is a security risk sort of, but it's necessary so
     # that the uploaded data can contain the retrieval url and so we can do
-    # this all in one req->resp.
+    # this all in a single req->resp.
     iid = uuid.uuid5(uuid.NAMESPACE_DNS, str(hostname))
     iid = unicode(iid.hex)
 
