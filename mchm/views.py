@@ -160,6 +160,10 @@ def post_data():
         elif installtype == 'cloud-init':
             doc['userdata'] = unicode(userdata)
             doc['metadata'] = unicode(metadata)
+        # reset phone home
+        doc['phonehome_status'] = False
+        doc['phonehome_data'] = None
+        doc['phonehome_time'] = None
         doc.save()
 
         # generate urls and timestamp
