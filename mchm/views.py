@@ -88,10 +88,22 @@ def get_data(iid=None, field=None):
 
         # kickstart install type
         elif doc['installtype'] == 'kickstart':
-            if field is not None:
-                raise werkzeug_exceptions.NotFound
-            resp = render_template('data.jinja2', data=doc['ksdata'])
-            return Response(resp, mimetype='text/plain')
+            if field is None:
+                resp = render_template('data.jinja2', data=doc['ksdata'])
+                return Response(resp, mimetype='text/plain')
+            elif field == 'phonehome':
+                if request.method == 'POST':
+                    doc['phonehome_time'] = datetime.utcnow()
+                    doc['phonehome_status'] = True
+                    doc['phonehome_data'] = request.form.to_dict()
+                    doc.save()
+                return jsonify(
+                    phonehome_time=doc['phonehome_time'],
+                    phonehome_status=doc['phonehome_status'],
+                    phonehome_data=doc['phonehome_data'],
+                )
+            else:
+                raise werkzeug_exceptions.BadRequest
 
         # unknown install type
         else:
