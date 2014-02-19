@@ -116,7 +116,7 @@ curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/meta-data
 ###/api/phonehome/\<id>/
 `GET` /api/phonehome/ to poll for VM status.
 
-`POST` to phonehome from VM's so you can tell when they are booted. Was made for the cloud-init phonehome module, but you can curl -XPOST from a kickstart `%post%` section just as well. Any post to a valid id will change `phonehome_status` to true.
+`POST` to /api/phonehome/ from VM's so you can tell when they are booted. Was made for the cloud-init phonehome module, but you can curl -XPOST from a kickstart `%post%` section just as well. Any post to a valid id will change `phonehome_status` to true.
 
 ```bash
 curl -XPOST http://mchm.mydomain.local/api/phonehome/5303fe26844de4049723a56e/ -d '{"msg":"kickstarted"}'
