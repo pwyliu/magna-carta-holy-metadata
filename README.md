@@ -1,7 +1,9 @@
 # Magna Carta Holy Metadata (MCHM)
 Magna Carta Holy Metadata (MCHM) is a simple Flask application that provides an http metadata service for virtual machines using cloud-init and the nocloudnet data source. It also works for hosting Kickstart files.
 
-Generate your configuration data, HTTP POST json formatted data to MCHM. Config data hangs out for an hour on a URL you can give to cloud-init or kickstart in a kernel param, then it's deleted automatically. Nice, right? 
+Generate your configuration data, HTTP POST json formatted data to MCHM. Config data hangs out for an hour on a URL you can give to cloud-init or kickstart in a kernel param, then it's deleted automatically.
+
+Nice, right?
 
 ## Dependencies
 * Python 2.7+ (see requirements.txt for module dependencies)
@@ -45,11 +47,9 @@ There are just a couple endpoints available. Everything is in [views.py](https:/
 `POST` json formatted data to this endpoint. MCHM will respond with an id and urls you can get the data on.
 #####To create new documents
 `POST` with parameter `install-type`. You can choose `cloud-init` or `kickstart`.
-#####To update existing documents
-`POST` with parameter `id` using the id that was returned to you on document creation. This is useful if you need to know the retrieval URL so you can put it into your kickstart or cloud-init phonehome module.
 
 ```bash
-# create a new cloud-init file, then update it
+# create a new cloud-init file
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"cloud-init","user-data":"my cloud-init userdata","meta-data":"my cloud-init metadata"}'
 
 {
@@ -62,10 +62,7 @@ curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application
   "ttl": 3600,
   "zeroconf_url": "http://169.254.169.254/api/530402e6844de405b7d48343/"
 }
-
-curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"530402e6844de405b7d48343","user-data":"my different cloud-init userdata","meta-data":"my different cloud-init metadata"}'
-
-# create a new kickstart file, then update it
+# create new kickstart file
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"kickstart","ks-data":"my kickstart file"}'
 
 {
@@ -78,20 +75,22 @@ curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application
   "ttl": 3600,
   "zeroconf_url": "http://169.254.169.254/api/5303fe26844de4049723a56e/"
 }
+```
+#####To update existing documents
+`POST` with parameter `id` using the id that was returned to you on document creation. This is useful if you need to know the retrieval URL so you can put it into your kickstart or cloud-init phonehome module.
 
+```bash
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"530402e6844de405b7d48343","user-data":"my different cloud-init userdata","meta-data":"my different cloud-init metadata"}'
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"5303fe26844de4049723a56e","ks-data":"my new kickstart info"}'
 ```
-
 ###/api/\<id>/
-###/api/\<id>/\<field>
-`GET` previously posted data. `<id>` is the id MCHM returned to you. User-data and meta-data only work for cloud-init. For Kickstart, MCHM just shows the kickstart file on the base url.
+`GET` previously posted data. MCHM will show the right things for cloud-init and kickstart. See "base" in the templates folder for the cloud-init data source page.
 
 ```bash
 curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/
 curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/user-data
 curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/meta-data
 ```
-
 ###/api/phonehome/\<id>/
 `GET` /api/phonehome/ to poll for VM status.
 `POST` to phonehome from VM's so you can tell when they are booted. Was made for the cloud-init phonehome module, but you can curl -XPOST from a kickstart `%post%` section just as well. Any post to a valid id will change `phonehome_status` to true.
@@ -105,7 +104,6 @@ curl -XPOST http://mchm.mydomain.local/api/phonehome/5303fe26844de4049723a56e/ -
   "phonehome_time": "Wed, 19 Feb 2014 01:25:00 GMT"
 }
 ```
-
 ## Contributors
 Just submit a pull request. If you see something which sucks please fix it.
 
