@@ -44,14 +44,13 @@ Nice, right?
 There are just a couple endpoints available. Everything is in [views.py](https://github.com/pwyliu/magna-carta-holy-metadata/blob/master/mchm/views.py).
 
 ###/api/submit/
-`POST` json formatted data to this endpoint. MCHM will respond with an id and urls you can get the data on.
+`POST` json formatted data to this endpoint. MCHM will respond with an id and urls you can get the data on. TTL is how long before the document is purged by the database.
 #####To create new documents
 `POST` with parameter `install-type`. You can choose `cloud-init` or `kickstart`.
 
 ```bash
 # create a new cloud-init file
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"cloud-init","user-data":"my cloud-init userdata","meta-data":"my cloud-init metadata"}'
-
 {
   "created_at": "Wed Feb 19 01:03:34 2014",
   "id": "530402e6844de405b7d48343",
@@ -62,9 +61,9 @@ curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application
   "ttl": 3600,
   "zeroconf_url": "http://169.254.169.254/api/530402e6844de405b7d48343/"
 }
+
 # create new kickstart file
 curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"kickstart","ks-data":"my kickstart file"}'
-
 {
   "created_at": "Wed Feb 19 00:43:18 2014",
   "id": "5303fe26844de4049723a56e",
@@ -77,11 +76,34 @@ curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application
 }
 ```
 #####To update existing documents
-`POST` with parameter `id` using the id that was returned to you on document creation. This is useful if you need to know the retrieval URL so you can put it into your kickstart or cloud-init phonehome module.
+`POST` with parameter `id` using the id that was returned to you on document creation. This is useful if you need to know the retrieval URL so you can put it into your kickstart or cloud-init phonehome module. Post once, get the response, then post again.
 
 ```bash
-curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"530402e6844de405b7d48343","user-data":"my different cloud-init userdata","meta-data":"my different cloud-init metadata"}'
-curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"5303fe26844de4049723a56e","ks-data":"my new kickstart info"}'
+#update cloud-init file
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"530402e6844de405b7d48343","user-data":"my updated cloud-init userdata","meta-data":"my updated cloud-init metadata"}'
+{
+  "created_at": "Wed Feb 19 01:03:34 2014",
+  "id": "530402e6844de405b7d48343",
+  "installtype": "cloud-init",
+  "ipv4_url": "http://mchm.mydomain.local/api/530402e6844de405b7d48343/",
+  "phonehome_status": false,
+  "status": "updated",
+  "ttl": 3600,
+  "zeroconf_url": "http://169.254.169.254/api/530402e6844de405b7d48343/"
+}
+
+#update kickstart file
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"5303fe26844de4049723a56e","ks-data":"my updated kickstart info"}'
+{
+  "created_at": "Wed Feb 19 00:43:18 2014",
+  "id": "5303fe26844de4049723a56e",
+  "installtype": "kickstart",
+  "ipv4_url": "http://mchm.mydomain.local/api/5303fe26844de4049723a56e/",
+  "phonehome_status": false,
+  "status": "updated",
+  "ttl": 3600,
+  "zeroconf_url": "http://169.254.169.254/api/5303fe26844de4049723a56e/"
+}
 ```
 ###/api/\<id>/
 `GET` previously posted data. MCHM will show the right things for cloud-init and kickstart. See "base" in the templates folder for the cloud-init data source page.
@@ -93,6 +115,7 @@ curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/meta-data
 ```
 ###/api/phonehome/\<id>/
 `GET` /api/phonehome/ to poll for VM status.
+
 `POST` to phonehome from VM's so you can tell when they are booted. Was made for the cloud-init phonehome module, but you can curl -XPOST from a kickstart `%post%` section just as well. Any post to a valid id will change `phonehome_status` to true.
 
 ```bash
