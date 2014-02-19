@@ -1,7 +1,7 @@
 # Magna Carta Holy Metadata (MCHM)
-Magna Carta Holy Metadata (MCHM) is a simple Flask application that provides an http metadata service for virtual machines using cloud-init and the nocloudnet data source.
+Magna Carta Holy Metadata (MCHM) is a simple Flask application that provides an http metadata service for virtual machines using cloud-init and the nocloudnet data source. It also works for hosting Kickstart files.
 
-HTTP POST json formatted data, it hangs out for an hour on a URL you can give to cloud-init, then it's deleted automatically. Easy. 
+Generate your configuration data, HTTP POST json formatted data to MCHM. Config data hangs out for an hour on a URL you can give to cloud-init or kickstart in a kernel param, then it's deleted automatically. Nice, right? 
 
 ## Dependencies
 * Python 2.7+ (see requirements.txt for module dependencies)
@@ -9,6 +9,7 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
 
 ## Motivation
 * [To do this](http://smoser.brickies.net/ubuntu/nocloud/)
+* [And also this](https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s2-kickstart2-networkbased.html)
 
 ## Installation
 1. Clone the project and install requirements. You should use a virtualenv.
@@ -40,32 +41,73 @@ HTTP POST json formatted data, it hangs out for an hour on a URL you can give to
 ## API Endpoints
 There are just a couple endpoints available. Everything is in [views.py](https://github.com/pwyliu/magna-carta-holy-metadata/blob/master/mchm/views.py).
 
-####/api/submit/
-POST json formatted data to this endpoint. The three required fields are iid, userdata and metadata. iid should be unique, I use the Python UUID module to generate these.
+###/api/submit/
+`POST` json formatted data to this endpoint. MCHM will respond with an id and urls you can get the data on.
+#####To create new documents
+`POST` with parameter `install-type`. You can choose `cloud-init` or `kickstart`.
+#####To update existing documents
+`POST` with parameter `id` using the id that was returned to you on document creation. This is useful if you need to know the retrieval URL so you can put it into your kickstart or cloud-init phonehome module.
 
 ```bash
-curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"iid":"some_unique_uuid","user-data":"this is some cloud-init userdata","meta-data":"this is some cloud-init metadata"}'
+# create a new cloud-init file, then update it
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"cloud-init","user-data":"my cloud-init userdata","meta-data":"my cloud-init metadata"}'
+
+{
+  "created_at": "Wed Feb 19 01:03:34 2014",
+  "id": "530402e6844de405b7d48343",
+  "installtype": "cloud-init",
+  "ipv4_url": "http://mchm.mydomain.local/api/530402e6844de405b7d48343/",
+  "phonehome_status": false,
+  "status": "ok",
+  "ttl": 3600,
+  "zeroconf_url": "http://169.254.169.254/api/530402e6844de405b7d48343/"
+}
+
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"530402e6844de405b7d48343","user-data":"my different cloud-init userdata","meta-data":"my different cloud-init metadata"}'
+
+# create a new kickstart file, then update it
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"install-type":"kickstart","ks-data":"my kickstart file"}'
+
+{
+  "created_at": "Wed Feb 19 00:43:18 2014",
+  "id": "5303fe26844de4049723a56e",
+  "installtype": "kickstart",
+  "ipv4_url": "http://mchm.mydomain.local/api/5303fe26844de4049723a56e/",
+  "phonehome_status": false,
+  "status": "ok",
+  "ttl": 3600,
+  "zeroconf_url": "http://169.254.169.254/api/5303fe26844de4049723a56e/"
+}
+
+curl http://mchm.mydomain.local/api/submit/ -X POST -H "Content-type:application/json" -d '{"id":"5303fe26844de4049723a56e","ks-data":"my new kickstart info"}'
 ```
 
-####/api/\<iid>/
-GET posted data. The `<iid>` is the iid you submitted in the post.
+###/api/\<id>/
+###/api/\<id>/\<field>
+`GET` previously posted data. `<id>` is the id MCHM returned to you. User-data and meta-data only work for cloud-init. For Kickstart, MCHM just shows the kickstart file on the base url.
+
 ```bash
-curl http://mchm.mydomain.local/api/some_unique_uuid/
+curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/
+curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/user-data
+curl http://mchm.mydomain.local/api/530402e6844de405b7d48343/meta-data
 ```
 
-####/api/\<iid>/\<field>
+###/api/phonehome/\<id>/
+`GET` /api/phonehome/ to poll for VM status.
+`POST` to phonehome from VM's so you can tell when they are booted. Was made for the cloud-init phonehome module, but you can curl -XPOST from a kickstart `%post%` section just as well. Any post to a valid id will change `phonehome_status` to true.
+
 ```bash
-curl http://mchm.mydomain.local/api/some_unique_uuid/userdata
-curl http://mchm.mydomain.local/api/some_unique_uuid/metadata
-curl http://mchm.mydomain.local/api/some_unique_uuid/phonehome
+curl -XPOST http://mchm.mydomain.local/api/phonehome/5303fe26844de4049723a56e/ -d '{"msg":"kickstarted"}'
+
+{
+  "phonehome_data": {}, 
+  "phonehome_status": true, 
+  "phonehome_time": "Wed, 19 Feb 2014 01:25:00 GMT"
+}
 ```
-GET posted data. Supported fields:
-* `userdata`: the userdata you posted
-* `metadata`: the metatdata you posted
-* `phonehome`: for use with cloud-init's phonehome module. When cloud-init posts here phonehome_status is set to true and phonehome_data contains the post data. See views.py for more details.
 
 ## Contributors
-Hey man, I'm easy. Just submit a pull request. If you see something which sucks please fix it.
+Just submit a pull request. If you see something which sucks please fix it.
 
 ## License
 The MIT License (MIT)

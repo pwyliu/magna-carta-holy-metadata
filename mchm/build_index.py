@@ -10,14 +10,9 @@ if __name__ == '__main__':
         #Drop and recreate indexes
         db.configdata.drop_indexes()
         ttl_index = db.configdata.ensure_index(
-            'ttlstart',
+            'created_at',
             pymongo.DESCENDING,
             expireAfterSeconds=site_config.DOC_LIFETIME
-        )
-        iid_index = db.configdata.ensure_index(
-            'iid',
-            pymongo.DESCENDING,
-            unique=True
         )
         print "Indexes successfully created"
         sys.exit(0)

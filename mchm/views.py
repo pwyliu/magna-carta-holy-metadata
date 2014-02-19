@@ -1,5 +1,5 @@
 from mchm import app, db, site_config
-from mongokit import Document
+from mongokit import Document, ObjectId
 from werkzeug import exceptions as werkzeug_exceptions
 from pymongo import errors as pymongo_exceptions
 from flask import request, jsonify, abort, render_template, url_for, Response
@@ -13,8 +13,7 @@ class Configdata(Document):
     __database__ = site_config.MONGO_DB_NAME
     structure = {
         'created_at': datetime,
-        'iid': unicode,
-        'installtype': unicode,
+        'installtype': basestring,
         'metadata': unicode,
         'userdata': unicode,
         'ksdata': unicode,
@@ -22,14 +21,13 @@ class Configdata(Document):
         'phonehome_time': datetime,
         'phonehome_data': dict,
     }
-    required_fields = ['iid', 'created_at']
+    required_fields = [
+        'created_at', 'installtype', 'phonehome_status'
+    ]
     default_values = {
-        'phonehome_status': False,
-        'phonehome_time': None,
-        'phonehome_data': None,
-        'metadata': None,
-        'userdata': None,
-        'ksdata': None,
+        'metadata': u'',
+        'userdata': u'',
+        'ksdata': u'',
     }
 
 
@@ -43,76 +41,51 @@ def frontdoor():
     )
 
 
-@app.route('/api/<iid>/')
-@app.route('/api/<iid>/<field>/', methods=['GET', 'POST'])
-def get_data(iid=None, field=None):
+@app.route('/api/<objectid>/')
+@app.route('/api/<objectid>/<field>/')
+def get_data(objectid=None, field=None):
     try:
-        doc = db.Configdata.fetch_one({'iid': iid})
+        # url is generated based on request so we can handle zeroconf and ipv4
         url = "{0}://{1}{2}".format(
             site_config.URL_SCHEME,
             request.headers['host'],
-            url_for('get_data', iid=iid)
+            url_for('get_data', objectid=objectid)
         )
 
+        # Get doc
+        doc = db.Configdata.fetch_one({'_id': ObjectId(objectid)})
         if doc is None:
             raise werkzeug_exceptions.NotFound
-        if field is not None:
-            field = unicode(field)
 
-        # cloud-init install type
+        # sanity checks
+        if doc['installtype'] not in ['cloud-init', 'kickstart']:
+            raise werkzeug_exceptions.InternalServerError
+        if field is not None:
+            # kickstart documents don't have <field>
+            if doc['installtype'] == 'kickstart':
+                raise werkzeug_exceptions.NotFound
+            else:
+                field = unicode(field)
+
+        # return cloud-init data
         if doc['installtype'] == 'cloud-init':
             if field is None:
-                return Response(
-                    render_template('base.jinja2', url=url),
-                    mimetype='text/plain'
-                )
+                resp = render_template('base.jinja2', url=url)
             elif field == 'meta-data':
                 resp = render_template('data.jinja2', data=doc['metadata'])
-                return Response(resp, mimetype='text/plain')
             elif field == 'user-data':
                 resp = render_template('data.jinja2', data=doc['userdata'])
-                return Response(resp, mimetype='text/plain')
-            elif field == 'phonehome':
-                if request.method == 'POST':
-                    doc['phonehome_time'] = datetime.utcnow()
-                    doc['phonehome_status'] = True
-                    doc['phonehome_data'] = request.form.to_dict()
-                    doc.save()
-                return jsonify(
-                    phonehome_time=doc['phonehome_time'],
-                    phonehome_status=doc['phonehome_status'],
-                    phonehome_data=doc['phonehome_data'],
-                )
             else:
-                raise werkzeug_exceptions.BadRequest
+                raise werkzeug_exceptions.NotFound
+            return Response(resp, mimetype='text/plain')
 
-        # kickstart install type
-        elif doc['installtype'] == 'kickstart':
-            if field is None:
-                resp = render_template('data.jinja2', data=doc['ksdata'])
-                return Response(resp, mimetype='text/plain')
-            elif field == 'phonehome':
-                if request.method == 'POST':
-                    doc['phonehome_time'] = datetime.utcnow()
-                    doc['phonehome_status'] = True
-                    doc['phonehome_data'] = request.form.to_dict()
-                    doc.save()
-                return jsonify(
-                    phonehome_time=doc['phonehome_time'],
-                    phonehome_status=doc['phonehome_status'],
-                    phonehome_data=doc['phonehome_data'],
-                )
-            else:
-                raise werkzeug_exceptions.BadRequest
-
-        # unknown install type
-        else:
-            raise
+        # return kickstart data
+        if doc['installtype'] == 'kickstart':
+            resp = render_template('data.jinja2', data=doc['ksdata'])
+            return Response(resp, mimetype='text/plain')
 
     except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
         abort(404)
-    except (werkzeug_exceptions.BadRequest, pymongo_exceptions.DuplicateKeyError):
-        abort(400)
     except Exception as ex:
         app.logger.error(ex)
         abort(500)
@@ -120,72 +93,100 @@ def get_data(iid=None, field=None):
 
 @app.route('/api/submit/', methods=['POST'])
 def post_data():
-    # Either JSON or GETOUT-SON
+    # JSON or GTFO
     if request.headers['Content-Type'] != 'application/json':
-        abort(400)
+        abort(406)
 
-    # get vars
-    hostname = request.get_json().get('hostname', None)
+    # Get vars
+    # objectid is the unique url we are storing data on, mapping to Mongo's
+    # default _id. If objectid was not specified MCHM creates a new document
+    # and returns the url it can be requested on in the response. If objectid
+    # already exists the data is overwritten. If the objectid doesn't exist
+    # MCHM returns an error.
+    objectid = request.get_json().get('id', None)
     installtype = request.get_json().get('install-type', None)
     ksdata = request.get_json().get('ks-data', None)
     userdata = request.get_json().get('user-data', None)
     metadata = request.get_json().get('meta-data', None)
 
-    # sanity check request
-    if hostname is None or installtype not in ['cloud-init', 'kickstart']:
-        abort(400)
-    if installtype == 'kickstart' and ksdata is None:
-        abort(400)
-    if installtype == 'cloud-init' and (userdata is None or metadata is None):
-        abort(400)
-
-    # iid.hex is being used as a slug that can be predetermined by the client
-    # before upload. This is a security risk sort of, but it's necessary so
-    # that the uploaded data can contain the retrieval url and so we can do
-    # this all in a single req->resp.
-    iid = uuid.uuid5(uuid.NAMESPACE_DNS, str(hostname))
-    iid = unicode(iid.hex)
-
-    # Save data. If the entry already exists then overwrite it
-    try:
-        doc = db.Configdata.fetch_one({'iid': iid})
-        if doc is None:
-            doc = db.Configdata()
-
+    # Create new document
+    if objectid is None:
+        if installtype not in ['cloud-init', 'kickstart']:
+            abort(400)
+        new = True
+        doc = db.Configdata()
         doc['created_at'] = datetime.utcnow()
-        doc['iid'] = iid
-        doc['installtype'] = unicode(installtype)
-        if installtype == 'kickstart':
-            doc['ksdata'] = unicode(ksdata)
-        elif installtype == 'cloud-init':
-            doc['userdata'] = unicode(userdata)
-            doc['metadata'] = unicode(metadata)
-        # reset phone home
+        doc['installtype'] = installtype
         doc['phonehome_status'] = False
-        doc['phonehome_data'] = None
-        doc['phonehome_time'] = None
-        doc.save()
+    # Existing document
+    else:
+        doc = db.Configdata.fetch_one({'_id': ObjectId(objectid)})
+        new = False
+        if doc is None:
+            abort(404)
 
-        # generate urls and timestamp
-        created_at = datetime.utcnow()
-        zeroconf_url = "{0}://{1}{2}".format(
-            site_config.URL_SCHEME,
-            site_config.ZEROCONF_IP,
-            url_for('get_data', iid=doc['iid'])
-        )
-        ipv4_url = "{0}://{1}{2}".format(
-            site_config.URL_SCHEME,
-            site_config.HOSTNAME,
-            url_for('get_data', iid=doc['iid'])
-        )
+    # Create or update document.
+    try:
+        if ksdata is not None:
+            doc['ksdata'] = unicode(ksdata)
+        if userdata is not None:
+            doc['userdata'] = unicode(userdata)
+        if metadata is not None:
+            doc['metadata'] = unicode(metadata)
+        doc.save()
+    except Exception as ex:
+        app.logger.error(ex)
+        abort(500)
+
+    zeroconf_url = "{0}://{1}{2}".format(
+        site_config.URL_SCHEME,
+        site_config.ZEROCONF_IP,
+        url_for('get_data', objectid=str(doc['_id']))
+    )
+    ipv4_url = "{0}://{1}{2}".format(
+        site_config.URL_SCHEME,
+        site_config.HOSTNAME,
+        url_for('get_data', objectid=str(doc['_id']))
+    )
+
+    if new:
+        status = 'ok'
+    else:
+        status = 'updated'
+
+    # response contains lookup url
+    return jsonify(
+        id=str(doc['_id']),
+        created_at=doc['created_at'].strftime('%c'),
+        installtype=doc['installtype'],
+        ipv4_url=ipv4_url,
+        zeroconf_url=zeroconf_url,
+        ttl=site_config.DOC_LIFETIME,
+        status=status,
+        phonehome_status=doc['phonehome_status']
+    )
+
+
+@app.route('/api/phonehome/<objectid>/', methods=['GET', 'POST'])
+def phone_home(objectid=None):
+    try:
+        doc = db.Configdata.fetch_one({'_id': ObjectId(objectid)})
+        if doc is None:
+            raise werkzeug_exceptions.NotFound
+
+        if request.method == 'POST':
+            doc['phonehome_time'] = datetime.utcnow()
+            doc['phonehome_status'] = True
+            doc['phonehome_data'] = request.form.to_dict()
+            doc.save()
+
         return jsonify(
-            status='ok',
-            ttl=site_config.DOC_LIFETIME,
-            created_at=doc['created_at'].strftime('%c'),
-            iid=iid,
-            zeroconf_url=zeroconf_url,
-            ipv4_url=ipv4_url,
+            phonehome_time=doc['phonehome_time'],
+            phonehome_status=doc['phonehome_status'],
+            phonehome_data=doc['phonehome_data'],
         )
+    except (pymongo_exceptions.InvalidId, werkzeug_exceptions.NotFound):
+        abort(404)
     except Exception as ex:
         app.logger.error(ex)
         abort(500)
