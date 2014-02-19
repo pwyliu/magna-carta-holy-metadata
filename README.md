@@ -44,7 +44,7 @@ Nice, right?
 There are just a couple endpoints available. Everything is in [views.py](https://github.com/pwyliu/magna-carta-holy-metadata/blob/master/mchm/views.py).
 
 ###/api/submit/
-`POST` json formatted data to this endpoint. MCHM will respond with an id and urls you can get the data on. TTL is how long before the document is purged by the database.
+`POST` json formatted data to this endpoint. The content type header must be "application/json". MCHM will respond with an id and urls you can get the data on. TTL is how long before the document is purged by the database.
 #####To create new documents
 `POST` with parameter `install-type`. You can choose `cloud-init` or `kickstart`.
 
