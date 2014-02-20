@@ -36,8 +36,8 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    rootdir = (os.path.join(os.path.dirname(__file__))).rstrip('/mchm')
-    with open('{}/README.md'.format(rootdir), 'r') as f:
+    rootdir = (os.path.join(os.path.dirname(__file__))).rpartition('/mchm')
+    with open('{}/README.md'.format(rootdir[0]), 'r') as f:
         md = f.read()
     resp = markdown.markdown(md, ['fenced_code'])
     return Response(Markup(resp))
