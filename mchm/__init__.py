@@ -1,4 +1,3 @@
-import site_config
 import logging
 import os
 from logging import Formatter
@@ -6,6 +5,8 @@ from logging.handlers import RotatingFileHandler
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask
 from mongokit import MongoClient
+import site_config
+
 
 #DB connection
 db = MongoClient(site_config.MONGO_URI)
