@@ -21,6 +21,7 @@ Nice, right?
     cd magna-carta-holy-metadata
     pip install -r requirements.txt
     ```
+
 2. Edit the configuration file to fit your environment.
    
     ```bash
@@ -28,16 +29,19 @@ Nice, right?
     cp site_config.py.example site_config.py
     vim site_config.py
     ```
+
 3. Run build_index script. MCHM uses a [MongoDB TTL collection](http://docs.mongodb.org/manual/tutorial/expire-data/) so that records are automatically deleted after an hour.
 
     ```bash
     python build_index.py
     ```
+
 4. MCHM is intended to be run behind Gunicorn+Nginx, but you can start it with the built in webserver
     
     ```bash
     ./runserver.py
     ```
+
 5. There are sample Upstart and Nginx confs in the support folder.
 
 ## API Endpoints

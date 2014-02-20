@@ -1,10 +1,12 @@
-from mchm import app, db, site_config
+import os
+from datetime import datetime
 from mongokit import Document, ObjectId
 from werkzeug import exceptions as werkzeug_exceptions
 from pymongo import errors as pymongo_exceptions
-from flask import request, jsonify, abort, render_template, url_for, Response
-from datetime import datetime
-import uuid
+from flask import (request, jsonify, abort, render_template, url_for,
+                   Response, Markup)
+import markdown
+from mchm import app, db, site_config
 
 
 @db.register
@@ -34,11 +36,11 @@ class Configdata(Document):
 #Routes
 @app.route('/')
 def frontdoor():
-    url = "{0}://{1}".format(site_config.URL_SCHEME, request.headers['host'])
-    return Response(
-        render_template('frontdoor.jinja2', url=url),
-        mimetype='text/plain'
-    )
+    rootdir = (os.path.join(os.path.dirname(__file__))).rstrip('/mchm')
+    with open('{}/README.md'.format(rootdir), 'r') as f:
+        md = f.read()
+    resp = markdown.markdown(md, ['fenced_code'])
+    return Response(Markup(resp))
 
 
 @app.route('/api/<objectid>/')
@@ -60,12 +62,8 @@ def get_data(objectid=None, field=None):
         # sanity checks
         if doc['installtype'] not in ['cloud-init', 'kickstart']:
             raise werkzeug_exceptions.InternalServerError
-        if field is not None:
-            # kickstart documents don't have <field>
-            if doc['installtype'] == 'kickstart':
-                raise werkzeug_exceptions.NotFound
-            else:
-                field = unicode(field)
+        if field is not None and doc['installtype'] == 'kickstart':
+            raise werkzeug_exceptions.NotFound
 
         # return cloud-init data
         if doc['installtype'] == 'cloud-init':
