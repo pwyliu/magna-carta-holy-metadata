@@ -1,0 +1,21 @@
+#################################
+#  TURN THIS OFF IN PRODUCTION  #
+#################################
+APP_DEBUG_MODE = False
+#################################
+
+#APP CONFIG
+APP_NAME = 'mchm'
+ZEROCONF_IP = '169.254.169.254'
+HOSTNAME = 'localhost'
+URL_SCHEME = 'http'
+
+# Config data lifetime.
+# If you change this you will have to recreate the index with
+# the build_index script.
+DOC_LIFETIME = 3600
+
+#DB CONFIG
+MONGO_URI = "mongodb://localhost"
+MONGO_DB_NAME = 'mchm'
+MONGO_COLLECTION_NAME = 'configdata'

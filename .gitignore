@@ -4,13 +4,8 @@ venv
 *.idea
 .meteor
 .*~
-
 *.py[cod]
-
-# C extensions
 *.so
-
-# Packages
 *.egg
 *.egg-info
 dist
@@ -24,21 +19,15 @@ develop-eggs
 .installed.cfg
 lib
 lib64
-
-# Installer logs
 pip-log.txt
-
-# Unit test / coverage reports
 .coverage
 .tox
 nosetests.xml
-
-# Translations
 *.mo
-
-# Mr Developer
 .mr.developer.cfg
 .project
 .pydevproject
-mchm.log
-site_config.py
+
+# instance folders
+logs/
+instance/
