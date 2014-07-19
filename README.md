@@ -3,15 +3,15 @@ Magna Carta Holy Metadata (MCHM) is a simple Flask application that provides an 
 
 Generate your configuration data, HTTP POST json formatted data to MCHM. Config data hangs out for an hour on a URL you can give to cloud-init or kickstart in a kernel param, then it's deleted automatically.
 
-Nice, right?
+MCHM was written especially for [Strikepackage](https://github.com/pwyliu/strikepackage). They are best friends forever.
 
 ## Dependencies
 * Python 2.7.6+ (see requirements.txt for module dependencies)
 * MongoDB 2.4+
 
 ## Motivation
-* [To do this](http://smoser.brickies.net/ubuntu/nocloud/)
-* [And also this](https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s2-kickstart2-networkbased.html)
+* To use cloud-init [like this](http://smoser.brickies.net/ubuntu/nocloud/)
+* And to use kickstart [like this](https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Installation_Guide/s2-kickstart2-networkbased.html)
 
 ## Installation
 1. Clone the project and install requirements. You should use a virtualenv.
@@ -79,7 +79,7 @@ curl https://mchm.mydomain.local/api/submit -X POST \
 # Creating a kickstart file:
 curl https://mchm.mydomain.local/api/submit -X POST \
 -H "Content-type:application/json" \
--d '{"install-type":"kickstart","ks-data":"my kickstart file"}'
+-d '{"install-type":"kickstart","ks-data":"my kickstart data"}'
 
 {
   "created_at": "Fri Jul 18 23:44:46 2014", 
@@ -131,7 +131,7 @@ curl https://mchm.mydomain.local/api/submit -X POST \
 ```
 
 ###/api/lookup/\<id>/\<field>/
-`GET` a cloud-init file. MCHM will show the right output for cloud-init and kickstart. See "base" in the templates folder for the cloud-init data source page.
+`GET` some cloud-init data. MCHM will show the right output for cloud-init and kickstart. See "base" in the templates folder for the cloud-init data source page.
 
 ```bash
 curl https://mchm.mydomain.local/api/53c9b0824ecee371865ad9eb/
@@ -142,7 +142,7 @@ curl https://mchm.mydomain.local/api/53c9b0824ecee371865ad9eb/meta-data
 ###/api/phonehome/\<id>
 `GET` /api/phonehome/\<id> to poll for status.
 
-`POST` to /api/phonehome/\<id> with the (phone_home module)[http://cloudinit.readthedocs.org/en/latest/topics/examples.html#call-a-url-when-finished] so you know cloud-init has finished running. Any `POST` to a valid id will change `phonehome_status` to true, the payload doesn't matter.
+`POST` to /api/phonehome/\<id> with the [phone_home module](http://cloudinit.readthedocs.org/en/latest/topics/examples.html#call-a-url-when-finished) so you know cloud-init has finished running. Any `POST` to a valid id will change `phonehome_status` to true, the payload doesn't matter.
 
 ```bash
 curl https://mchm.mydomain.local/api/phonehome/53c9b0824ecee371865ad9eb \
@@ -156,7 +156,7 @@ curl https://mchm.mydomain.local/api/phonehome/53c9b0824ecee371865ad9eb \
 }
 ```
 ## Contributors
-Feel free to submit any pull request. I ain't fancy.
+Feel free to submit a pull request. I ain't fancy.
 
 ## License
 The MIT License (MIT)
